@@ -4,7 +4,7 @@
   "type": "module",
   "version": "0.1.2",
   "bin": {
-    "orbital": "./bin/orbital.js"
+    "orbital": "bin/orbital.js"
   },
   "scripts": {
     "devnet:setup": "node ./mod/setup.js",
