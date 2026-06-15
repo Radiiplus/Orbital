@@ -1,0 +1,35 @@
+{
+  "name": "orbkit",
+  "private": false,
+  "type": "module",
+  "version": "0.1.2",
+  "bin": {
+    "orbital": "bin/orbital.js"
+  },
+  "scripts": {
+    "devnet:setup": "node ./mod/setup.js",
+    "orbkit": "node ./mod/orbkit.mjs",
+    "orbkit:firebase": "node ./mod/orbkit.mjs",
+    "wallet:create": "node ./mod/create.mjs",
+    "fund:devnet": "node ./mod/fund.mjs",
+    "balance:worker": "node ./mod/balance-worker.mjs",
+    "funding:worker": "node ./mod/funding-worker.mjs",
+    "build-deploy:worker": "node ./mod/build-deploy-worker.mjs",
+    "structure:worker": "node ./mod/structure-worker.mjs",
+    "balance": "node ./mod/balance.mjs",
+    "build:deploy": "node ./mod/buildeploy.mjs",
+    "deploy:prepare": "node ./mod/deploy-prepare.mjs",
+    "deploy:sim": "node ./mod/sim.mjs",
+    "channels": "node ./mod/channels.mjs",
+    "graphql:ws": "node ./mod/graphqlws.mjs",
+    "server:events": "node ./mod/serverevents.mjs",
+    "structure": "node ./mod/structure.mjs",
+    "init:workspace": "node ./bin/orbital.js init",
+    "test": "node ./tests/orbkit.mjs"
+  },
+  "dependencies": {
+    "@ckb-lumos/lumos": "^0.23.0",
+    "bip39": "^3.1.0",
+    "ws": "^8.18.3"
+  }
+}

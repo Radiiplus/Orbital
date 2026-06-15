@@ -1,0 +1,49 @@
+{
+  "version": 1,
+  "paths": {
+    "workspaceRoot": "../../..",
+    "contractsRoot": "../../../contract",
+    "deploymentOutput": "../../../deployment"
+  },
+  "networks": {
+    "devnet": {
+      "rpcUrl": "http://127.0.0.1:8114",
+      "indexerUrl": "http://127.0.0.1:8114",
+      "offckbNetwork": "devnet"
+    },
+    "testnet": {
+      "rpcUrl": "https://testnet.ckb.dev/rpc",
+      "indexerUrl": "https://testnet.ckb.dev",
+      "offckbNetwork": "testnet"
+    },
+    "mainnet": {
+      "rpcUrl": "https://mainnet.ckb.dev/rpc",
+      "indexerUrl": "https://mainnet.ckb.dev",
+      "offckbNetwork": "mainnet"
+    }
+  },
+  "funder": {
+    "network": "devnet",
+    "genesisAddressesFile": "./genesis.json",
+    "privateKeyEnv": "FUNDER_PRIVKEY",
+    "defaultPrivateKey": "",
+    "requireKnownGenesisAddress": false
+  },
+  "deployment": {
+    "contractsSourceFile": "../orbital.config.js",
+    "rustTarget": "riscv64imac-unknown-none-elf",
+    "rustTargetDir": "target-windows",
+    "migrationsMode": "latest-only",
+    "concurrency": 1,
+    "allowMainnetDeploy": true
+  },
+  "devnet": {
+    "autoStart": true,
+    "cleanBeforeStart": true,
+    "startupWaitAttempts": 60,
+    "startupWaitIntervalMs": 2000
+  },
+  "graphql": {
+    "httpUrl": "http://127.0.0.1:4000/graphql"
+  }
+}

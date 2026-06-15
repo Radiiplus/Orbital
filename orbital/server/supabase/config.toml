@@ -1,0 +1,4 @@
+project_id = "orbital"
+
+[functions.orbital-api]
+verify_jwt = false

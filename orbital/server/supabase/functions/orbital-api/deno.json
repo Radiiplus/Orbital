@@ -1,0 +1,8 @@
+{
+  "tasks": {
+    "serve": "supabase functions serve orbital-api --workdir ../.. --env-file ./.env.local"
+  },
+  "compilerOptions": {
+    "lib": ["deno.ns", "dom", "dom.iterable"]
+  }
+}
