@@ -1,0 +1,22 @@
+{
+  "name": "orbital-server",
+  "private": true,
+  "type": "module",
+  "version": "0.1.0",
+  "scripts": {
+    "start": "node ./index.js",
+    "dev": "nodemon ./index.js",
+    "cleanup:runtime": "node ./scripts/cleanup-runtime-collections.mjs",
+    "supabase:function:serve": "npx supabase functions serve orbital-api --env-file ./supabase/functions/orbital-api/.env.local",
+    "supabase:function:deploy": "npx supabase functions deploy orbital-api",
+    "test": "node ./test.js"
+  },
+  "dependencies": {
+    "dotenv": "^17.4.2",
+    "fastify": "^5.8.5",
+    "firebase-admin": "^13.0.2",
+    "graphql": "^16.14.1",
+    "mercurius": "^16.9.0",
+    "nodemon": "^3.1.10"
+  }
+}
