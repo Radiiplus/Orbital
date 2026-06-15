@@ -25,7 +25,7 @@ function getDeviceId(input = {}) {
   ).trim();
 }
 
-export function createSessionInfoService({ walletAccessService, logger }) {
+export function createSessionInfoService({ walletAccessService, db, logger }) {
   function logSessionInfo(level, event, context = {}) {
     const method = logger?.[level];
     if (typeof method !== 'function') return;
@@ -34,6 +34,20 @@ export function createSessionInfoService({ walletAccessService, logger }) {
       event,
       ...context,
     }, 'session info event');
+  }
+
+  function userPayload(session) {
+    const sessionUser = session?.user || {};
+    const currentUser = sessionUser.uuid && typeof db?.getUserByUuid === 'function'
+      ? db.getUserByUuid(sessionUser.uuid)
+      : null;
+    const api = String(currentUser?.api || sessionUser.api || currentUser?.helperApiKey || '').trim() || null;
+    const helperApiKey = String(currentUser?.helperApiKey || '').trim() || null;
+    return {
+      username: currentUser?.username ?? sessionUser.username ?? null,
+      api,
+      helperApiKey,
+    };
   }
 
   return {
@@ -63,10 +77,7 @@ export function createSessionInfoService({ walletAccessService, logger }) {
         deviceId: session.deviceId || null,
         expiresAt: session.expiresAt,
         refreshed: Boolean(session.refreshed),
-        user: {
-          username: session.user?.username ?? null,
-          api: session.user?.api ?? null,
-        },
+        user: userPayload(session),
       };
     },
     refreshSession({ headers = {}, body = {}, reply } = {}) {
@@ -95,10 +106,7 @@ export function createSessionInfoService({ walletAccessService, logger }) {
         deviceId: session.deviceId || deviceId,
         expiresAt: session.expiresAt,
         refreshed: Boolean(session.refreshed),
-        user: {
-          username: session.user?.username ?? null,
-          api: session.user?.api ?? null,
-        },
+        user: userPayload(session),
       };
     },
   };

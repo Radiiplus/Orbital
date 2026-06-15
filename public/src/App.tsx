@@ -12,6 +12,7 @@ import {
 } from './lib/session'
 import { apiPath } from './lib/api'
 import HomePage from './pages/home'
+import GuidePage from './pages/guide'
 
 type SessionPayload = {
   ok?: boolean
@@ -22,6 +23,7 @@ type SessionPayload = {
 }
 
 const SESSION_LOG_PREFIX = '[orbital:session]'
+const SESSION_LOG_ENABLED = import.meta.env.VITE_SESSION_LOGS === 'true'
 
 function redactValue(value: string | null | undefined) {
   const text = String(value || '').trim()
@@ -31,6 +33,7 @@ function redactValue(value: string | null | undefined) {
 }
 
 function sessionLog(event: string, detail: Record<string, unknown> = {}) {
+  if (!SESSION_LOG_ENABLED) return
   console.info(SESSION_LOG_PREFIX, event, detail)
 }
 
@@ -67,7 +70,7 @@ async function readSession(accessToken: string, deviceId: string) {
 }
 
 function requireAuthForPath(pathname: string) {
-  return pathname !== AUTH_PAGE_PATH
+  return pathname !== AUTH_PAGE_PATH && pathname !== '/guide'
 }
 
 function replacePath(path: string, setPathname: (pathname: string) => void) {
@@ -224,6 +227,10 @@ export default function App() {
 
   if (pathname === AUTH_PAGE_PATH) {
     return <AuthPage />
+  }
+
+  if (pathname === '/guide') {
+    return <GuidePage />
   }
 
   if (validatedPath !== pathname) {

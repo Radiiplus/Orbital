@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { Rotate3D } from 'lucide-react'
 import {
   DASH_PAGE_PATH,
   getOrCreateDeviceId,
@@ -45,6 +46,12 @@ const GRAPHQL_URL = GRAPHQL_ENDPOINT
 const NETWORK = 'devnet'
 const SITE_NAME = 'Orbital'
 
+function normalizeMnemonicInput(value: string) {
+  return value
+    .normalize('NFKD')
+    .replace(/[\u200B-\u200D\uFEFF]/g, '')
+    .trim()
+}
 
 function bytesToHex(bytes: Uint8Array) {
   return Array.from(bytes, (byte) => byte.toString(16).padStart(2, '0')).join('')
@@ -572,7 +579,8 @@ export default function AuthPage() {
 
   async function handleRecovery() {
     const value = existingUsername.trim().toLowerCase()
-    if (!value || !recoveryMnemonic.trim()) {
+    const mnemonic = normalizeMnemonicInput(recoveryMnemonic)
+    if (!value || !mnemonic) {
       setMessage('Username and mnemonic are required.')
       return
     }
@@ -580,7 +588,7 @@ export default function AuthPage() {
     setMessage('Recovering account and preparing passkey...')
     try {
       const proof = await createPasskeyProof(value)
-      const result = await recoverAccount(value, recoveryMnemonic.trim(), deviceId, proof)
+      const result = await recoverAccount(value, mnemonic, deviceId, proof)
       setSessionCookie(result.accessToken)
       setDeviceCookie(deviceId)
       setExistingStep('done')
@@ -603,7 +611,9 @@ export default function AuthPage() {
           <aside className="glass-panel flex flex-col justify-between p-6 sm:p-8">
             <div>
               <div className="mb-8 flex items-center gap-3">
-                <div className="h-11 w-11 rounded-[1rem] bg-zinc-100 shadow-[7px_7px_18px_rgba(0,0,0,0.9),-5px_-5px_16px_rgba(255,255,255,0.12)]" />
+                <div className="grid h-11 w-11 place-items-center rounded-[1rem] bg-zinc-100 text-black shadow-[7px_7px_18px_rgba(0,0,0,0.9),-5px_-5px_16px_rgba(255,255,255,0.12)]">
+                  <Rotate3D size={23} strokeWidth={2.4} />
+                </div>
                 <div>
                   <p className="text-sm font-semibold uppercase tracking-[0.3em] text-zinc-500">Orbital</p>
                   <h1 className="text-3xl font-semibold tracking-normal text-white sm:text-4xl">Wallet access</h1>

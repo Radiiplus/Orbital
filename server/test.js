@@ -44,6 +44,13 @@ function writeJson(filePath, payload) {
   fs.writeFileSync(filePath, `${JSON.stringify(payload, null, 2)}\n`);
 }
 
+function pasteFormattedMnemonic(mnemonic) {
+  return String(mnemonic || '')
+    .split(' ')
+    .map((word, index) => `${index + 1}. ${word}`)
+    .join('\r\n\u200B');
+}
+
 function removeDirSafe(dirPath) {
   if (fs.existsSync(dirPath)) {
     fs.rmSync(dirPath, { recursive: true, force: true });
@@ -764,6 +771,56 @@ async function run() {
     assert.equal(sessionInfoBody.user.username, 'creator-user');
     assert.equal(sessionInfoBody.refreshed, false);
 
+    const helperKeyRes = await app.inject({
+      method: 'POST',
+      url: '/graphql',
+      headers: {
+        Authorization: `Bearer ${secondLoginBody.data.login.accessToken}`,
+        'x-device-id': 'device_creator_001',
+      },
+      payload: {
+        query: 'mutation CreateHelperApiKey($passkeyProof: String!) { createHelperApiKey(passkeyProof: $passkeyProof) { username key createdAt } }',
+        variables: {
+          passkeyProof: '11112222333344445555666677778888',
+        },
+      },
+    });
+    const helperKeyBody = helperKeyRes.json();
+    assert.equal(helperKeyBody.data.createHelperApiKey.username, 'creator-user');
+    assert.equal(helperKeyBody.data.createHelperApiKey.key, '11112222333344445555666677778888');
+
+    const rotatedHelperKeyRes = await app.inject({
+      method: 'POST',
+      url: '/graphql',
+      headers: {
+        Authorization: `Bearer ${secondLoginBody.data.login.accessToken}`,
+        'x-device-id': 'device_creator_001',
+      },
+      payload: {
+        query: 'mutation CreateHelperApiKey($passkeyProof: String!) { createHelperApiKey(passkeyProof: $passkeyProof) { username key createdAt } }',
+        variables: {
+          passkeyProof: '9999aaaabbbbccccddddeeeeffff0000',
+        },
+      },
+    });
+    const rotatedHelperKeyBody = rotatedHelperKeyRes.json();
+    assert.equal(rotatedHelperKeyBody.data.createHelperApiKey.username, 'creator-user');
+    assert.equal(rotatedHelperKeyBody.data.createHelperApiKey.key, '9999aaaabbbbccccddddeeeeffff0000');
+    assert.notEqual(rotatedHelperKeyBody.data.createHelperApiKey.key, helperKeyBody.data.createHelperApiKey.key);
+
+    const sessionInfoWithKeyRes = await app.inject({
+      method: 'GET',
+      url: '/session',
+      headers: {
+        Authorization: `Bearer ${secondLoginBody.data.login.accessToken}`,
+        'x-device-id': 'device_creator_001',
+      },
+    });
+    const sessionInfoWithKeyBody = sessionInfoWithKeyRes.json();
+    assert.equal(sessionInfoWithKeyBody.ok, true);
+    assert.equal(sessionInfoWithKeyBody.user.api, rotatedHelperKeyBody.data.createHelperApiKey.key);
+    assert.equal(sessionInfoWithKeyBody.user.helperApiKey, rotatedHelperKeyBody.data.createHelperApiKey.key);
+
     const creatorUser = app.db.getUserByUsername('creator-user');
     const creatorSession = app.db.getSessionByUuid(creatorUser.uuid);
     app.db.upsertSession({
@@ -959,6 +1016,24 @@ async function run() {
     assert.equal(recoverBody.data.recoverAccount.wallet.address, createAccountBody.data.createAccount.wallet.address);
     assert.equal(recoverBody.data.recoverAccount.wallet.addresses.devnet, createAccountBody.data.createAccount.wallet.addresses.devnet);
     assert.equal(recoverBody.data.recoverAccount.passkeyProof, createAccountBody.data.createAccount.wallet.privkey);
+
+    const formattedRecoverRes = await app.inject({
+      method: 'POST',
+      url: '/graphql',
+      payload: {
+        query: 'mutation Recover($username: String!, $mnemonic: String!, $passkeyProof: String, $deviceId: String!) { recoverAccount(username: $username, mnemonic: $mnemonic, passkeyProof: $passkeyProof, deviceId: $deviceId) { ok wallet { address addresses { devnet } } } }',
+        variables: {
+          username: 'creator-user',
+          mnemonic: pasteFormattedMnemonic(createAccountBody.data.createAccount.wallet.mnemonic),
+          passkeyProof: '90ef7856cd34ab12',
+          deviceId: 'device_creator_002',
+        },
+      },
+    });
+    const formattedRecoverBody = formattedRecoverRes.json();
+    assert.equal(formattedRecoverBody.data.recoverAccount.ok, true);
+    assert.equal(formattedRecoverBody.data.recoverAccount.wallet.address, createAccountBody.data.createAccount.wallet.address);
+    assert.equal(formattedRecoverBody.data.recoverAccount.wallet.addresses.devnet, createAccountBody.data.createAccount.wallet.addresses.devnet);
 
     const schemaRes = await app.inject({
       method: 'POST',

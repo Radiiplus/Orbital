@@ -1,7 +1,7 @@
 import { blockchain } from 'npm:@ckb-lumos/base@0.23.0'
 import { bytes } from 'npm:@ckb-lumos/codec@0.23.0'
 import { hd } from 'npm:@ckb-lumos/lumos@0.23.0'
-import { entropyToMnemonic, mnemonicToEntropy, mnemonicToSeedSync } from 'npm:bip39@3.1.0'
+import { entropyToMnemonic, mnemonicToEntropy, mnemonicToSeedSync, wordlists } from 'npm:bip39@3.1.0'
 
 type Json = Record<string, unknown>
 
@@ -174,11 +174,77 @@ function normalizeDeviceId(value: unknown) {
   return deviceId
 }
 
+const MNEMONIC_WORD_COUNTS = new Set([12, 15, 18, 21, 24])
+const ENGLISH_MNEMONIC_WORDS = wordlists.english
+const ENGLISH_MNEMONIC_WORD_SET = new Set(ENGLISH_MNEMONIC_WORDS)
+const ENGLISH_MNEMONIC_WORDS_BY_LENGTH = [...ENGLISH_MNEMONIC_WORDS].sort((left, right) => right.length - left.length)
+
+function cleanMnemonicText(value: unknown) {
+  return String(value || '')
+    .normalize('NFKD')
+    .replace(/[\u200B-\u200D\uFEFF]/g, '')
+    .toLowerCase()
+    .trim()
+}
+
+function validateMnemonicCandidate(candidate: string) {
+  const mnemonic = String(candidate || '').trim().replace(/\s+/g, ' ')
+  if (!mnemonic) return null
+  const words = mnemonic.split(' ')
+  if (!MNEMONIC_WORD_COUNTS.has(words.length)) return null
+  try {
+    mnemonicToEntropy(mnemonic)
+    return mnemonic
+  } catch {
+    return null
+  }
+}
+
+function extractMnemonicWords(text: string) {
+  const words = text.match(/[a-z]+/g) || []
+  const mnemonicWords = words.filter((word) => ENGLISH_MNEMONIC_WORD_SET.has(word))
+  return validateMnemonicCandidate(mnemonicWords.join(' '))
+}
+
+function segmentMnemonicChars(text: string) {
+  const chars = text.replace(/[^a-z]/g, '')
+  const memo = new Map<string, string | null>()
+
+  function walk(index: number, words: string[]): string | null {
+    if (MNEMONIC_WORD_COUNTS.has(words.length) && index === chars.length) {
+      return validateMnemonicCandidate(words.join(' '))
+    }
+    if (words.length >= 24 || index >= chars.length) return null
+
+    const key = `${index}:${words.length}`
+    if (memo.has(key)) return memo.get(key) || null
+
+    for (const word of ENGLISH_MNEMONIC_WORDS_BY_LENGTH) {
+      if (!chars.startsWith(word, index)) continue
+      const result = walk(index + word.length, [...words, word])
+      if (result) {
+        memo.set(key, result)
+        return result
+      }
+    }
+
+    memo.set(key, null)
+    return null
+  }
+
+  return walk(0, [])
+}
+
 function normalizeMnemonic(value: unknown) {
-  const mnemonic = String(value || '').trim().replace(/\s+/g, ' ')
-  if (!mnemonic) throw new Error('mnemonic is required.')
-  mnemonicToEntropy(mnemonic)
-  return mnemonic
+  const text = cleanMnemonicText(value)
+  if (!text) throw new Error('mnemonic is required.')
+  const direct = validateMnemonicCandidate(text)
+  if (direct) return direct
+  const extracted = extractMnemonicWords(text)
+  if (extracted) return extracted
+  const segmented = segmentMnemonicChars(text)
+  if (segmented) return segmented
+  throw new Error('Invalid mnemonic. Check the words and their order.')
 }
 
 function parseMetadata(metadata: unknown): Json {
@@ -869,14 +935,22 @@ async function devnetStatus(request: Request) {
 async function sessionInfo(request: Request) {
   const session = await resolveSession(request)
   if (!session) return errorResponse(401, 'Session is no longer valid.')
-  const user = (session.user || {}) as Json
+  const sessionUser = (session.user || {}) as Json
+  const currentUser = await getUserByUuid(String(sessionUser.uuid || ''))
+  const user = currentUser || sessionUser
+  const api = String(user.api || sessionUser.api || user.helperApiKey || '').trim() || null
+  const helperApiKey = String(user.helperApiKey || '').trim() || null
   return jsonResponse({
     ok: true,
     accessToken: session.token || null,
     deviceId: session.deviceId || null,
     expiresAt: session.expiresAt || null,
     refreshed: false,
-    user: { username: user.username || null, api: user.api || user.helperApiKey || null },
+    user: {
+      username: user.username || sessionUser.username || null,
+      api,
+      helperApiKey,
+    },
   })
 }
 
@@ -1084,9 +1158,11 @@ async function createHelperApiKey(request: Request, body: Json = {}) {
   const session = await requireSession(request, body)
   const user = await getUserByUuid(String((session.user as Json).uuid || ''))
   if (!user) throw new Error('User not found for session.')
-  const keyBytes = new Uint8Array(24)
-  crypto.getRandomValues(keyBytes)
-  const key = `orb_${Array.from(keyBytes, (byte) => byte.toString(16).padStart(2, '0')).join('')}`
+  const key = normalizePasskeyProof(body.passkeyProof)
+  const keyOwner = (await listUsers()).find((item) => String(item.uuid || '').trim() !== String(user.uuid || '').trim() && (
+    String(item.helperApiKey || '').trim() === key || String(item.api || '').trim() === key
+  ))
+  if (keyOwner) throw new Error('API key already belongs to another user.')
   const updated = await upsertUser({ ...user, api: key, helperApiKey: key, helperApiKeyCreatedAt: nowIso() })
   return { username: updated?.username, key, createdAt: updated?.helperApiKeyCreatedAt || nowIso() }
 }

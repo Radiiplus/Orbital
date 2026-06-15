@@ -1,9 +1,9 @@
 import {
   Activity,
   Boxes,
-  CircleDotDashed,
   Code2,
   Home,
+  Rotate3D,
   Rocket,
   Settings,
   WalletCards,
@@ -28,7 +28,7 @@ export default function Sidebar() {
         href="/dash"
         title="Orbital"
       >
-        <CircleDotDashed size={22} strokeWidth={2.4} />
+        <Rotate3D size={22} strokeWidth={2.4} />
       </a>
 
       <nav aria-label="Primary" className="flex items-center gap-2 md:mt-4 md:flex-1 md:flex-col">

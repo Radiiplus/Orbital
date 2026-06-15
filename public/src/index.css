@@ -513,6 +513,472 @@ textarea:disabled {
   border-color: rgba(248, 113, 113, 0.36);
 }
 
+.guide-page {
+  color: #f4f4f5;
+}
+
+.guide-topbar,
+.guide-hero,
+.guide-band,
+.guide-panel,
+.guide-callout {
+  border: 1px solid rgba(255, 255, 255, 0.11);
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.075), rgba(255, 255, 255, 0.02)),
+    rgba(8, 9, 12, 0.78);
+  box-shadow:
+    18px 18px 42px rgba(0, 0, 0, 0.72),
+    inset 1px 1px 0 rgba(255, 255, 255, 0.07);
+  backdrop-filter: blur(18px);
+}
+
+.guide-topbar {
+  align-items: center;
+  border-radius: 1.5rem;
+  display: flex;
+  gap: 1rem;
+  justify-content: space-between;
+  min-width: 0;
+  padding: 0.9rem;
+}
+
+.guide-brand {
+  align-items: center;
+  color: #ffffff;
+  display: inline-flex;
+  gap: 0.85rem;
+  min-width: 0;
+  text-decoration: none;
+}
+
+.guide-brand > span:first-child {
+  align-items: center;
+  background: linear-gradient(145deg, #22d3ee, #2563eb);
+  border-radius: 1.1rem;
+  color: #ffffff;
+  display: flex;
+  height: 2.8rem;
+  justify-content: center;
+  width: 2.8rem;
+}
+
+.guide-brand strong,
+.guide-brand small {
+  display: block;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.guide-brand strong {
+  font-size: 1.05rem;
+  font-weight: 800;
+}
+
+.guide-brand small {
+  color: #a1a1aa;
+  font-size: 0.78rem;
+  margin-top: 0.12rem;
+}
+
+.guide-actions {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  justify-content: flex-end;
+  min-width: 0;
+}
+
+.guide-actions a {
+  align-items: center;
+  background: rgba(255, 255, 255, 0.055);
+  border-radius: 999px;
+  color: #e4e4e7;
+  display: inline-flex;
+  gap: 0.35rem;
+  min-height: 2.2rem;
+  padding: 0 0.85rem;
+  text-decoration: none;
+  transition:
+    background 180ms ease,
+    transform 180ms ease;
+}
+
+.guide-actions a:hover {
+  background: rgba(255, 255, 255, 0.09);
+  transform: translateY(-1px);
+}
+
+.guide-actions .guide-primary-link {
+  background: #f4f4f5;
+  color: #000000;
+  font-weight: 800;
+}
+
+.guide-hero {
+  border-radius: 1.8rem;
+  display: grid;
+  gap: 1.2rem;
+  grid-template-columns: minmax(0, 1fr) minmax(17rem, 0.42fr);
+  min-height: 28rem;
+  overflow: hidden;
+  padding: clamp(1.2rem, 4vw, 3.5rem);
+  position: relative;
+}
+
+.guide-hero::before {
+  background:
+    linear-gradient(120deg, rgba(34, 211, 238, 0.18), transparent 45%),
+    radial-gradient(circle at 82% 22%, rgba(251, 191, 36, 0.14), transparent 24%);
+  content: "";
+  inset: 0;
+  pointer-events: none;
+  position: absolute;
+}
+
+.guide-hero-copy,
+.guide-snapshot {
+  position: relative;
+}
+
+.guide-hero h1 {
+  color: #ffffff;
+  font-size: clamp(2.35rem, 6vw, 5.9rem);
+  font-weight: 800;
+  letter-spacing: 0;
+  line-height: 0.95;
+  margin: 0.8rem 0 0;
+  max-width: 58rem;
+}
+
+.guide-hero-copy > p:last-of-type {
+  color: #d4d4d8;
+  font-size: clamp(1rem, 2vw, 1.18rem);
+  line-height: 1.75;
+  margin: 1.25rem 0 0;
+  max-width: 48rem;
+}
+
+.guide-hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.8rem;
+  margin-top: 1.6rem;
+}
+
+.guide-hero-button {
+  align-items: center;
+  display: inline-flex;
+  justify-content: center;
+  max-width: 13rem;
+  min-height: 3.2rem;
+  text-decoration: none;
+  width: auto;
+}
+
+.guide-snapshot {
+  align-self: end;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 1.35rem;
+  background: rgba(0, 0, 0, 0.36);
+  padding: 1rem;
+}
+
+.guide-snapshot-grid {
+  display: grid;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.guide-snapshot-grid div {
+  border-radius: 1rem;
+  background: rgba(255, 255, 255, 0.045);
+  padding: 0.8rem;
+}
+
+.guide-snapshot-grid span,
+.guide-snapshot-grid strong {
+  display: block;
+}
+
+.guide-snapshot-grid span {
+  color: #71717a;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.guide-snapshot-grid strong {
+  color: #ffffff;
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 0.9rem;
+  margin-top: 0.35rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.guide-band,
+.guide-panel,
+.guide-callout {
+  border-radius: 1.65rem;
+  padding: clamp(1rem, 3vw, 1.65rem);
+}
+
+.guide-section-header {
+  max-width: 52rem;
+}
+
+.guide-section-header h2,
+.guide-panel h2 {
+  color: #ffffff;
+  font-size: clamp(1.7rem, 3vw, 2.7rem);
+  font-weight: 800;
+  letter-spacing: 0;
+  line-height: 1.05;
+  margin: 0.55rem 0 0;
+}
+
+.guide-section-header > p:last-child {
+  color: #a1a1aa;
+  font-size: 1rem;
+  line-height: 1.7;
+  margin: 0.8rem 0 0;
+}
+
+.guide-feature-grid {
+  display: grid;
+  gap: 0.9rem;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  margin-top: 1.35rem;
+}
+
+.guide-card,
+.guide-step-card,
+.guide-capability,
+.guide-command-list article,
+.guide-config-list article {
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 1.15rem;
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.055), rgba(255, 255, 255, 0.015)),
+    rgba(0, 0, 0, 0.24);
+  min-width: 0;
+}
+
+.guide-card {
+  padding: 1rem;
+}
+
+.guide-icon {
+  align-items: center;
+  border-radius: 0.95rem;
+  display: inline-flex;
+  height: 2.45rem;
+  justify-content: center;
+  width: 2.45rem;
+}
+
+.guide-card h3,
+.guide-step-card h3,
+.guide-callout h3 {
+  color: #ffffff;
+  font-size: 1rem;
+  font-weight: 800;
+  letter-spacing: 0;
+  margin: 0.9rem 0 0;
+}
+
+.guide-card p,
+.guide-step-card p,
+.guide-callout p,
+.guide-capability p,
+.guide-command-list p,
+.guide-config-list p {
+  color: #a1a1aa;
+  font-size: 0.9rem;
+  line-height: 1.65;
+  margin: 0.55rem 0 0;
+}
+
+.guide-tone-cyan {
+  background: rgba(34, 211, 238, 0.13);
+  color: #a5f3fc;
+}
+
+.guide-tone-emerald {
+  background: rgba(16, 185, 129, 0.13);
+  color: #6ee7b7;
+}
+
+.guide-tone-amber {
+  background: rgba(251, 191, 36, 0.13);
+  color: #fde68a;
+}
+
+.guide-tone-violet {
+  background: rgba(139, 92, 246, 0.14);
+  color: #ddd6fe;
+}
+
+.guide-tone-rose {
+  background: rgba(244, 63, 94, 0.13);
+  color: #fecdd3;
+}
+
+.guide-tone-slate {
+  background: rgba(148, 163, 184, 0.13);
+  color: #e2e8f0;
+}
+
+.guide-split {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: minmax(0, 1fr) minmax(18rem, 0.44fr);
+}
+
+.guide-steps {
+  display: grid;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.guide-step-card {
+  display: grid;
+  gap: 0.25rem;
+  grid-template-columns: 3.1rem minmax(0, 1fr);
+  padding: 0.9rem;
+}
+
+.guide-step-card > span {
+  align-items: center;
+  align-self: start;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 0.85rem;
+  color: #ffffff;
+  display: flex;
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 0.82rem;
+  font-weight: 800;
+  height: 2.5rem;
+  justify-content: center;
+  width: 2.5rem;
+}
+
+.guide-step-card h3,
+.guide-step-card p {
+  grid-column: 2;
+  margin-top: 0;
+}
+
+.guide-callout {
+  align-self: start;
+  min-height: 17rem;
+}
+
+.guide-callout h3 {
+  font-size: 1.35rem;
+}
+
+.guide-orbkit-layout {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: minmax(0, 1fr) minmax(19rem, 0.45fr);
+}
+
+.guide-terminal {
+  align-self: start;
+  border: 1px solid rgba(34, 211, 238, 0.18);
+  border-radius: 1.25rem;
+  background: rgba(0, 0, 0, 0.48);
+  overflow: hidden;
+}
+
+.guide-terminal-title {
+  align-items: center;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.09);
+  color: #a5f3fc;
+  display: flex;
+  gap: 0.5rem;
+  font-weight: 800;
+  padding: 0.85rem 1rem;
+}
+
+.guide-terminal pre {
+  color: #e4e4e7;
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 0.86rem;
+  line-height: 1.7;
+  margin: 0;
+  overflow-x: auto;
+  padding: 1rem;
+}
+
+.guide-inline-title {
+  align-items: center;
+  color: #a5f3fc;
+  display: flex;
+  gap: 0.65rem;
+}
+
+.guide-inline-title h2 {
+  font-size: 1.45rem;
+  margin: 0;
+}
+
+.guide-command-list,
+.guide-config-list {
+  display: grid;
+  gap: 0.7rem;
+  margin-top: 1rem;
+}
+
+.guide-command-list article,
+.guide-config-list article {
+  padding: 0.85rem;
+}
+
+.guide-command-list code {
+  color: #ffffff;
+  display: block;
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 0.86rem;
+  overflow-wrap: anywhere;
+}
+
+.guide-config-list strong {
+  color: #ffffff;
+  display: block;
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 0.86rem;
+  overflow-wrap: anywhere;
+}
+
+.guide-capability-grid {
+  display: grid;
+  gap: 0.8rem;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin-top: 1.2rem;
+}
+
+.guide-capability {
+  padding: 0.95rem;
+}
+
+.guide-capability svg {
+  color: #a5f3fc;
+}
+
+.guide-capability strong {
+  color: #ffffff;
+  display: block;
+  font-size: 0.96rem;
+  margin-top: 0.55rem;
+}
+
 @media (max-width: 900px) {
   .app-topbar {
     align-items: flex-start;
@@ -552,6 +1018,35 @@ textarea:disabled {
   .app-status-pill {
     min-width: 0;
   }
+
+  .guide-topbar,
+  .guide-hero,
+  .guide-split,
+  .guide-orbkit-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .guide-topbar {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .guide-actions {
+    justify-content: flex-start;
+    width: 100%;
+  }
+
+  .guide-actions a {
+    justify-content: center;
+  }
+
+  .guide-feature-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .guide-capability-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 @media (max-width: 420px) {
@@ -589,6 +1084,29 @@ textarea:disabled {
   .auth-kicker {
     font-size: 0.64rem;
     letter-spacing: 0.18em;
+  }
+
+  .guide-hero {
+    border-radius: 1.1rem;
+    min-height: auto;
+  }
+
+  .guide-hero h1 {
+    font-size: 2.2rem;
+  }
+
+  .guide-feature-grid,
+  .guide-capability-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .guide-step-card {
+    grid-template-columns: 2.8rem minmax(0, 1fr);
+  }
+
+  .guide-actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 

@@ -1,5 +1,5 @@
 import { createWallet } from '../../orbkit/mod/create.mjs';
-import { createWalletFromMnemonic } from '../../orbkit/mod/common.mjs';
+import { createWalletFromMnemonic, normalizeMnemonic } from '../../orbkit/mod/common.mjs';
 
 function normalizeUsername(username) {
   const value = String(username || '').trim().toLowerCase();
@@ -24,14 +24,6 @@ function normalizeLabel(label) {
   }
   if (value.length > 40) {
     throw new Error('Wallet label must be 40 characters or fewer.');
-  }
-  return value;
-}
-
-function normalizeMnemonic(mnemonic) {
-  const value = String(mnemonic || '').trim().replace(/\s+/g, ' ');
-  if (!value) {
-    throw new Error('mnemonic is required.');
   }
   return value;
 }

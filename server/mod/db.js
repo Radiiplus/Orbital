@@ -1,14 +1,10 @@
-import { randomBytes, randomUUID } from 'node:crypto';
+import { randomUUID } from 'node:crypto';
 import { describeSchema as describeAccountSchema } from './schema.js';
 import { describeRuntimeSchema } from './runtime-schema.js';
 import { createFirebaseDb, isFirebaseConfigured } from './firebase-db.js';
 
 function nowIso() {
   return new Date().toISOString();
-}
-
-function createHelperKey() {
-  return `orb_${randomBytes(24).toString('hex')}`;
 }
 
 function toHelperApiKeyRecord(user) {
@@ -130,20 +126,23 @@ export function createDbStub() {
       const user = this.getUserByUsername(username);
       return toHelperApiKeyRecord(user);
     },
-    createHelperApiKey(username) {
+    createHelperApiKey(username, keyInput) {
       const user = this.getUserByUsername(username);
       if (!user) {
         throw new Error('User not found.');
       }
-      let key = createHelperKey();
-      while (Array.from(users.values()).some((item) => item.helperApiKey === key || item.api === key)) {
-        key = createHelperKey();
+      const key = String(keyInput || '').trim().toLowerCase();
+      if (!/^[a-f0-9]{16,128}$/.test(key)) {
+        throw new Error('API key must be a hex-like string between 16 and 128 characters.');
+      }
+      if (Array.from(users.values()).some((item) => item.uuid !== user.uuid && (item.helperApiKey === key || item.api === key))) {
+        throw new Error('API key already belongs to another user.');
       }
       const createdAt = nowIso();
       const existing = users.get(user.uuid) || user;
       const record = {
         ...existing,
-        api: key,  // Set both fields for consistency
+        api: key,
         helperApiKey: key,
         helperApiKeyCreatedAt: createdAt,
         updatedAt: createdAt,

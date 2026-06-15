@@ -9,6 +9,7 @@ const LEGACY_DEVICE_COOKIE = 'orbital_device_id'
 const LEGACY_DEVICE_STORAGE_KEY = 'orbital.deviceId'
 const SESSION_COOKIE_MAX_AGE_SECONDS = 31536000 * 10
 const SESSION_LOG_PREFIX = '[orbital:session]'
+const SESSION_LOG_ENABLED = import.meta.env.VITE_SESSION_LOGS === 'true'
 
 type RefreshPayload = {
   ok?: boolean
@@ -39,6 +40,7 @@ function redactValue(value: string | null | undefined) {
 }
 
 function logSession(event: string, detail: Record<string, unknown> = {}) {
+  if (!SESSION_LOG_ENABLED) return
   console.info(SESSION_LOG_PREFIX, event, detail)
 }
 

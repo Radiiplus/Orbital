@@ -124,6 +124,7 @@ export function buildServer(options = {}) {
     publishServiceEvent: publishInternalServiceEvent,
   }));
   app.decorate('sessionInfoService', options.sessionInfoService || createSessionInfoService({
+    db,
     walletAccessService: app.walletAccessService,
     logger: app.log,
   }));

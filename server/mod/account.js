@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { createWallet } from '../../orbkit/mod/create.mjs';
-import { createWalletFromMnemonic } from '../../orbkit/mod/common.mjs';
+import { createWalletFromMnemonic, normalizeMnemonic } from '../../orbkit/mod/common.mjs';
 
 function nowIso() {
   return new Date().toISOString();
@@ -174,14 +174,11 @@ export function createAccountService({ db, sessions }) {
     },
     recoverAccount(input = {}) {
       const username = normalizeUsername(input.username);
-      const mnemonic = String(input.mnemonic || '').trim();
+      const mnemonic = normalizeMnemonic(input.mnemonic);
       const passkeyProof = input.passkeyProof ? normalizePasskeyProof(input.passkeyProof) : null;
       const deviceId = normalizeDeviceId(input.deviceId);
       if (!username) {
         throw new Error('username is required.');
-      }
-      if (!mnemonic) {
-        throw new Error('mnemonic is required.');
       }
 
       const user = db.getUserByUsername(username);

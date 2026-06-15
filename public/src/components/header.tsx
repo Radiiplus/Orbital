@@ -1,19 +1,26 @@
 import {
+  BookOpenText,
   ChevronDown,
   CircleDollarSign,
   Globe2,
   KeyRound,
-  Layers3,
   RefreshCw,
+  Rotate3D,
   Wifi,
   WifiOff,
 } from 'lucide-react'
 import { useEffect, useState, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import TopupWizard from './TopupWizard'
-import { getStoredAccessToken } from '../lib/session'
+import {
+  getStoredAccessToken,
+  getStoredDeviceId,
+  setDeviceCookie,
+  setSessionCookie,
+} from '../lib/session'
 import { apiPath } from '../lib/api'
 import { GRAPHQL_ENDPOINT } from '../lib/graphql'
+import { authenticatePasskeyProof } from '../lib/passkey'
 
 export type Network = 'devnet' | 'testnet' | 'mainnet'
 
@@ -227,7 +234,7 @@ export default function Header({
     <header className="app-topbar app-reveal">
       <div className="flex min-w-0 max-w-full items-center gap-3 sm:gap-4">
         <div className="app-brand-mark">
-          <Layers3 size={24} strokeWidth={2.4} />
+          <Rotate3D size={24} strokeWidth={2.4} />
         </div>
         <div className="min-w-0">
           <h1 className="truncate text-lg font-extrabold tracking-normal text-white sm:text-xl">Orbital Ops</h1>
@@ -285,6 +292,11 @@ export default function Header({
           {activeWalletLabel}
         </button>
 
+        <a className="app-pill app-muted-pill no-underline" href="/guide" title="Open guide">
+          <BookOpenText size={16} strokeWidth={2.2} />
+          <span>Guide</span>
+        </a>
+
         <HelperKeyControl />
 
         <button
@@ -316,12 +328,14 @@ export default function Header({
 
 function graphqlRequest(query: string, variables?: Record<string, unknown>) {
   const token = getStoredAccessToken()
+  const deviceId = getStoredDeviceId()
   return fetch(GRAPHQL_ENDPOINT, {
     method: 'POST',
     credentials: 'same-origin',
     headers: {
       'Content-Type': 'application/json',
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...(deviceId ? { 'x-device-id': deviceId } : {}),
     },
     body: JSON.stringify({ query, variables }),
   }).then(async (res) => {
@@ -329,15 +343,41 @@ function graphqlRequest(query: string, variables?: Record<string, unknown>) {
     if (!res.ok || payload.errors?.length) {
       throw new Error(payload.errors?.[0]?.message || `GraphQL request failed (${res.status})`)
     }
+    const refreshedToken = res.headers.get('x-access-token')
+    if (refreshedToken) setSessionCookie(refreshedToken)
+    const refreshedDeviceId = res.headers.get('x-device-id')
+    if (refreshedDeviceId) setDeviceCookie(refreshedDeviceId)
     return payload.data
   })
+}
+
+type SessionKeyPayload = {
+  ok?: boolean
+  accessToken?: string
+  deviceId?: string
+  message?: string
+  user?: {
+    username?: string | null
+    api?: string | null
+    helperApiKey?: string | null
+    key?: string | null
+  } | null
+}
+
+function sessionKeyFromPayload(payload: SessionKeyPayload | null) {
+  const user = payload?.user
+  const key = String(user?.api || user?.helperApiKey || user?.key || '').trim()
+  return key || null
 }
 
 function HelperKeyControl() {
   const [show, setShow] = useState(false)
   const [key, setKey] = useState<string | null>(null)
+  const [keyStatus, setKeyStatus] = useState<'idle' | 'loading' | 'loaded' | 'error'>('idle')
+  const [keyError, setKeyError] = useState('')
+  const [username, setUsername] = useState('')
   const [copied, setCopied] = useState(false)
-  const [reveal, setReveal] = useState(false)
+  const [reveal, setReveal] = useState(true)
   const [anchorRect, setAnchorRect] = useState<DOMRect | null>(null)
   const [isCreating, setIsCreating] = useState(false)
 
@@ -345,37 +385,68 @@ function HelperKeyControl() {
   const popupRef = useRef<HTMLDivElement | null>(null)
 
   async function loadKey() {
+    setKeyStatus('loading')
+    setKeyError('')
     try {
       const token = getStoredAccessToken()
+      const deviceId = getStoredDeviceId()
+      if (!token) {
+        throw new Error('Session token is missing.')
+      }
       const response = await fetch(apiPath('/session'), {
+        cache: 'no-store',
         headers: {
           Authorization: `Bearer ${token}`,
+          ...(deviceId ? { 'x-device-id': deviceId } : {}),
         },
       })
-      const data = (await response.json()) as { user?: { api?: string | null } } | null
-      setKey(data?.user?.api ?? null)
-    } catch (err) {
+      const data = (await response.json().catch(() => ({}))) as SessionKeyPayload
+      if (!response.ok || data?.ok === false) {
+        throw new Error(data?.message || `Session returned ${response.status}`)
+      }
+      const refreshedToken = response.headers.get('x-access-token') || data.accessToken
+      if (refreshedToken) setSessionCookie(refreshedToken)
+      const refreshedDeviceId = response.headers.get('x-device-id') || data.deviceId
+      if (refreshedDeviceId) setDeviceCookie(refreshedDeviceId)
+      setKey(sessionKeyFromPayload(data))
+      setUsername(String(data.user?.username || '').trim())
+      setKeyStatus('loaded')
+    } catch (error) {
       setKey(null)
+      setKeyStatus('error')
+      setKeyError(error instanceof Error ? error.message : 'Could not load API key.')
     }
   }
 
   async function createKey() {
     setIsCreating(true)
+    setKeyError('')
     try {
+      const accountUsername = username.trim()
+      if (!accountUsername) {
+        throw new Error('Username is required to rotate the API key.')
+      }
+      const passkeyProof = await authenticatePasskeyProof(accountUsername)
       const data = await graphqlRequest(`
-        mutation {
-          createHelperApiKey {
+        mutation CreateHelperApiKey($passkeyProof: String!) {
+          createHelperApiKey(passkeyProof: $passkeyProof) {
             username
             key
             createdAt
           }
         }
-      `)
+      `, {
+        passkeyProof,
+      })
       if (data?.createHelperApiKey?.key) {
         setKey(data.createHelperApiKey.key)
+        setKeyStatus('loaded')
+        setKeyError('')
       }
     } catch (err) {
       console.error('Failed to create API key:', err)
+      setKeyStatus('error')
+      setKeyError(err instanceof Error ? err.message : 'Failed to create API key.')
     } finally {
       setIsCreating(false)
     }
@@ -387,7 +458,7 @@ function HelperKeyControl() {
       await navigator.clipboard.writeText(key)
       setCopied(true)
       setTimeout(() => setCopied(false), 1500)
-    } catch (err) {
+    } catch {
       // ignore
     }
   }
@@ -397,6 +468,14 @@ function HelperKeyControl() {
     if (k.length <= 24) return k
     return `${k.slice(0, 10)}...${k.slice(-8)}`
   }
+
+  const keyText = keyStatus === 'loading'
+    ? 'Loading API key...'
+    : keyStatus === 'error'
+      ? keyError || 'Could not load API key.'
+      : key
+        ? (reveal ? key : mask(key))
+        : 'No API key created for this account yet.'
 
   useEffect(() => {
     function onDocClick(e: MouseEvent) {
@@ -454,7 +533,7 @@ function HelperKeyControl() {
       >
         <div className="rounded-xl bg-[#0b0c12] p-3 shadow-lg">
           <p className="text-xs uppercase tracking-[0.18em] text-slate-500">API Key</p>
-          <p className="mt-2 break-all font-mono text-sm text-slate-200">{key ? (reveal ? key : mask(key)) : 'No API key created for this account yet.'}</p>
+          <p className={`mt-2 break-all font-mono text-sm ${keyStatus === 'error' ? 'text-amber-200' : 'text-slate-200'}`}>{keyText}</p>
           <div className="mt-3 flex items-center justify-end gap-2">
             {key && (
               <>
@@ -462,9 +541,12 @@ function HelperKeyControl() {
                 <button onClick={() => setReveal((r) => !r)} className="rounded-xl bg-white/5 px-3 py-1.5 text-xs font-medium text-slate-200 transition hover:bg-white/10">{reveal ? 'Hide' : 'Reveal'}</button>
               </>
             )}
+            {keyStatus === 'error' && (
+              <button onClick={() => void loadKey()} className="rounded-xl bg-white/5 px-3 py-1.5 text-xs font-medium text-slate-200 transition hover:bg-white/10">Retry</button>
+            )}
             <button
               onClick={() => void createKey()}
-              disabled={isCreating}
+              disabled={isCreating || keyStatus === 'loading'}
               className="rounded-xl bg-cyan-500/15 px-3 py-1.5 text-xs font-medium text-cyan-200 transition hover:bg-cyan-500/25 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isCreating ? 'Creating...' : key ? 'Rotate Key' : 'Create Key'}

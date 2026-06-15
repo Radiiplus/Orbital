@@ -31,6 +31,7 @@ const schema = `
     createAccountWallet(input: AddAccountWalletInput!): UserWallet!
     linkAccountWallet(input: LinkAccountWalletInput!): UserWallet!
     deleteWallet(username: String!, walletAddress: String!, network: String!): Boolean!
+    createHelperApiKey(passkeyProof: String!): HelperApiKey!
     publishOrbkitBalanceUpdate(address: String!, balance: String!): DevnetBalance!
   }
 
@@ -190,6 +191,12 @@ const schema = `
     updatedAt: String!
   }
 
+  type HelperApiKey {
+    username: String!
+    key: String!
+    createdAt: String!
+  }
+
   type ProjectStructureEvent {
     streamId: String!
     contractPath: String!
@@ -234,6 +241,7 @@ export default async function graphqlRoutes(fastify) {
   const bridge = fastify.serviceBridge;
   const accountService = fastify.accountService;
   const accountWalletService = fastify.accountWalletService;
+  const helperApiKeyService = fastify.helperApiKeyService;
   const accountInfoService = fastify.accountInfoService;
   const orbkitEventService = fastify.orbkitEventService;
   const authService = fastify.authService;
@@ -482,6 +490,12 @@ export default async function graphqlRoutes(fastify) {
       deleteWallet: async (_, args, context) => {
         await ensureDbReady();
         const result = accountWalletService.deleteWallet(args, requestAuth(context));
+        await flushDbWrites();
+        return result;
+      },
+      createHelperApiKey: async (_, args, context) => {
+        await ensureDbReady();
+        const result = helperApiKeyService.createHelperApiKey(args, requestAuth(context));
         await flushDbWrites();
         return result;
       },

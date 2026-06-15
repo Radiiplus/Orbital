@@ -5,7 +5,7 @@ import https from 'node:https';
 import { spawn } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { randomBytes } from 'node:crypto';
-import { entropyToMnemonic, mnemonicToEntropy, mnemonicToSeedSync } from 'bip39';
+import { entropyToMnemonic, mnemonicToEntropy, mnemonicToSeedSync, wordlists } from 'bip39';
 import { config as lumosConfig, hd, helpers } from '@ckb-lumos/lumos';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -127,11 +127,81 @@ export function normalizePrivateKey(input, label = 'private key') {
   return normalized;
 }
 
+const MNEMONIC_WORD_COUNTS = new Set([12, 15, 18, 21, 24]);
+const ENGLISH_MNEMONIC_WORDS = wordlists.english;
+const ENGLISH_MNEMONIC_WORD_SET = new Set(ENGLISH_MNEMONIC_WORDS);
+const ENGLISH_MNEMONIC_WORDS_BY_LENGTH = [...ENGLISH_MNEMONIC_WORDS].sort((left, right) => right.length - left.length);
+
+function cleanMnemonicText(input) {
+  return String(input || '')
+    .normalize('NFKD')
+    .replace(/[\u200B-\u200D\uFEFF]/g, '')
+    .toLowerCase()
+    .trim();
+}
+
+function validateMnemonicCandidate(candidate) {
+  const normalized = String(candidate || '').trim().replace(/\s+/g, ' ');
+  if (!normalized) return null;
+  const words = normalized.split(' ');
+  if (!MNEMONIC_WORD_COUNTS.has(words.length)) return null;
+  try {
+    mnemonicToEntropy(normalized);
+    return normalized;
+  } catch {
+    return null;
+  }
+}
+
+function extractMnemonicWords(text) {
+  const words = text.match(/[a-z]+/g) || [];
+  const mnemonicWords = words.filter((word) => ENGLISH_MNEMONIC_WORD_SET.has(word));
+  return validateMnemonicCandidate(mnemonicWords.join(' '));
+}
+
+function segmentMnemonicChars(text) {
+  const chars = text.replace(/[^a-z]/g, '');
+  const memo = new Map();
+
+  function walk(index, words) {
+    if (MNEMONIC_WORD_COUNTS.has(words.length) && index === chars.length) {
+      return validateMnemonicCandidate(words.join(' '));
+    }
+    if (words.length >= 24 || index >= chars.length) return null;
+
+    const key = `${index}:${words.length}`;
+    if (memo.has(key)) return memo.get(key);
+
+    for (const word of ENGLISH_MNEMONIC_WORDS_BY_LENGTH) {
+      if (!chars.startsWith(word, index)) continue;
+      const result = walk(index + word.length, [...words, word]);
+      if (result) {
+        memo.set(key, result);
+        return result;
+      }
+    }
+
+    memo.set(key, null);
+    return null;
+  }
+
+  return walk(0, []);
+}
+
 export function normalizeMnemonic(input) {
-  const normalized = String(input || '').trim().replace(/\s+/g, ' ');
-  assert(normalized.length > 0, 'mnemonic is required.');
-  mnemonicToEntropy(normalized);
-  return normalized;
+  const text = cleanMnemonicText(input);
+  assert(text.length > 0, 'mnemonic is required.');
+
+  const direct = validateMnemonicCandidate(text);
+  if (direct) return direct;
+
+  const extracted = extractMnemonicWords(text);
+  if (extracted) return extracted;
+
+  const segmented = segmentMnemonicChars(text);
+  if (segmented) return segmented;
+
+  throw new Error('Invalid mnemonic. Check the words and their order.');
 }
 
 export function createWalletFromPrivateKey(privateKeyInput, options = {}) {

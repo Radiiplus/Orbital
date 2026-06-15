@@ -6,6 +6,14 @@ function normalizeUsername(username) {
   return value;
 }
 
+function normalizeApiKey(value) {
+  const key = String(value || '').trim().toLowerCase();
+  if (!/^[a-f0-9]{16,128}$/.test(key)) {
+    throw new Error('passkeyProof must be a hex-like string between 16 and 128 characters.');
+  }
+  return key;
+}
+
 function applySessionRefresh(reply, session) {
   if (!reply?.raw || !session?.refreshed || !session?.token) return;
   reply.raw.setHeader('x-access-token', session.token);
@@ -37,7 +45,7 @@ export function createHelperApiKeyService({ db, walletAccessService }) {
     },
     createHelperApiKey(input = {}, auth = {}) {
       const { user } = resolveAuthorizedUser(auth);
-      return db.createHelperApiKey(user.username);
+      return db.createHelperApiKey(user.username, normalizeApiKey(input.passkeyProof));
     },
   };
 }

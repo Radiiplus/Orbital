@@ -3,6 +3,7 @@ import BuildDeployPanel from '../components/BuildDeployPanel'
 import Header, { type Network } from '../components/header'
 import ProjectStructurePanel from '../components/ProjectStructurePanel'
 import WalletsPanel from '../components/wallets/WalletsPanel'
+import { fetchPublicNetworkBalances } from '../lib/balances'
 import {
   createAccountWallet,
   deleteWallet,
@@ -262,9 +263,13 @@ export default function HomePage() {
         listWallets(currentUsername, network),
         loadAccountBalances(currentUsername),
       ])
+      const rpcBalances = await fetchPublicNetworkBalances(
+        walletRows.map((wallet) => wallet.address),
+        network,
+      )
       const nextWallets = walletRows.map((wallet) => ({
         ...wallet,
-        balance: balances.get(`${wallet.network}:${wallet.address}`) ?? null,
+        balance: rpcBalances[wallet.address] ?? balances.get(`${wallet.network}:${wallet.address}`) ?? null,
       }))
 
       setWallets(nextWallets)
